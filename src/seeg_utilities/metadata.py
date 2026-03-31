@@ -1,3 +1,5 @@
+"""Instructions for digitizing sEEG electrode metadata."""
+
 import runpy
 from typing import TYPE_CHECKING
 
@@ -11,102 +13,80 @@ if TYPE_CHECKING:
 def load_electrode_metadata(
     filepath: Path,
     *,
-    only_recording_electrodes: bool = True,
+    exclude_ground: bool = True,
+    exclude_reference: bool = False,
 ) -> pd.DataFrame:
     metadata = _collate_electrode_metadata(**{
         k.lower(): v
         for k, v in runpy.run_path(filepath).items()
         if k
         in {
-            "ELECTRODE_LOCATIONS",
-            "GROUND_ELECTRODE",
-            "REFERENCE_ELECTRODE",
-            "BAD_ELECTRODES",
-            "JACKBOX_INDICES",
+            "CHANNEL_NAMES",
+            "CONTACT_LOCATIONS",
+            "GROUND_CONTACT",
+            "REFERENCE_CONTACT",
+            "BAD_CONTACTS",
         }
     })
-    if only_recording_electrodes:
-        metadata = metadata.loc[metadata["jackbox_index"] >= 0]
+    if exclude_ground:
+        metadata = metadata.loc[~metadata["ground"]]
+    if exclude_reference:
+        metadata = metadata.loc[~metadata["reference"]]
     return metadata
 
 
 def _collate_electrode_metadata(
     *,
-    electrode_locations: dict[str, dict[frozenset[int], str]],
-    ground_electrode: tuple[str, int],
-    reference_electrode: tuple[str, int],
-    bad_electrodes: dict[str, tuple[frozenset[int], str]],
-    jackbox_indices: dict[str, frozenset[int]],
+    channel_names: list[str],
+    contact_locations: dict[tuple(str, int), str],
+    ground_contact: tuple[str, int],
+    reference_contact: tuple[str, int],
+    bad_contacts: dict[str, tuple[list[int], str]],
 ) -> pd.DataFrame:
-    jackbox_electrodes = {
-        shaft: range(sum(len(key) for key in locations))
-        for shaft, locations in electrode_locations.items()
-    }
-    for shaft, electrode in (ground_electrode, reference_electrode):
-        jackbox_electrodes[shaft] = sorted(
-            set(jackbox_electrodes[shaft]) - {electrode},
-        )
-
-    jackbox_mapping = {
-        shaft: dict(
-            zip(jackbox_electrodes[shaft], jackbox_indices_, strict=False),
-        )
-        for shaft, jackbox_indices_ in jackbox_indices.items()
-    }
-
     metadata = {
-        "label": [],
-        "shaft": [],
         "electrode": [],
+        "contact": [],
         "location": [],
+        "label": [],
         "bad": [],
         "details": [],
         "jackbox_index": [],
+        "ch_name": [],
     }
 
-    for shaft, values in electrode_locations.items():
-        for electrodes_, location in values.items():
-            for electrode in electrodes_:
-                jackbox_index_valid = (shaft, electrode) not in {
-                    ground_electrode,
-                    reference_electrode,
-                }
-
-                metadata["label"].append(f"{shaft}-{1 + electrode:02}")
-                metadata["shaft"].append(shaft)
-                metadata["electrode"].append(electrode)
-                metadata["location"].append(location)
-                metadata["jackbox_index"].append(
-                    jackbox_mapping[shaft][electrode] if jackbox_index_valid else -1,
-                )
-
-                if not jackbox_index_valid:
-                    metadata["bad"].append(True)
-                    metadata["details"].append("")
-                elif shaft in bad_electrodes:
-                    bad_electrodes_, details = bad_electrodes[shaft]
-                    metadata["bad"].append(electrode in bad_electrodes_)
-                    metadata["details"].append(
-                        details if electrode in bad_electrodes_ else "",
-                    )
-                else:
-                    metadata["bad"].append(False)
-                    metadata["details"].append("")
+    jackbox_index = 0
+    for (electrode, contact_index), location in contact_locations.items():
+        metadata["electrode"].append(electrode)
+        metadata["contact"].append(contact_index)
+        metadata["location"].append(location)
+        metadata["label"].append(f"{electrode}-{1 + contact_index:02}")
+        metadata["bad"].append((electrode, contact_index) in bad_contacts)
+        metadata["details"].append(
+            bad_contacts[electrode, contact_index] if metadata["bad"][-1] else ""
+        )
+        if (electrode, contact_index) in {
+            ground_contact,
+            reference_contact,
+        }:
+            metadata["ch_name"].append(
+                "ground"
+                if (electrode, contact_index) == ground_contact
+                else "reference"
+            )
+            metadata["jackbox_index"].append(-1)
+        else:
+            metadata["ch_name"].append(channel_names[jackbox_index])
+            metadata["jackbox_index"].append(jackbox_index)
+            jackbox_index += 1
 
     return (
         pd
         .DataFrame(metadata)
-        .astype({
-            "shaft": "string",
-            "location": "string",
-            "electrode": np.uint8,
-            "label": "string",
-            "details": "string",
-        })
-        .set_index(["shaft", "electrode"])
-        .sort_values("jackbox_index")
+        .astype({"contact": np.uint8})
+        .set_index(["electrode", "contact"])
+        .sort_index(level=["electrode", "contact"])
         .assign(
-            ground=lambda x: x.index == ground_electrode,
-            reference=lambda x: x.index == reference_electrode,
+            ground=lambda x: x.index == ground_contact,
+            reference=lambda x: x.index == reference_contact,
         )
     )

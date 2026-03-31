@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "seeg-utilities"
-description = "Utilities to work with sEEG data from the Behrmann lab"
+description = "Miscellaneous utilities to work with sEEG data"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "GPL-3.0-or-later"
@@ -14,7 +14,6 @@ authors = [
 ]
 keywords = [
     "sEEG",
-    "Behrmann lab",
     "contact locator",
     "RippleNeuroMed control",
     "CT to MRI (T1w) alignment",
@@ -38,7 +37,9 @@ dependencies = [
     "scipy",
     "mne",
     "nibabel",
-    "dcm2niix",               # FIXME when cmake on cluster gets better
+    "dipy",
+    "k3d",
+    # "dcm2niix",               # FIXME when cmake on cluster gets better
     "heudiconv[all]",
     "matplotlib",
     "hough-3d-line-detector",
@@ -53,3 +54,6 @@ dev = ["ruff", "pytest", "sphinx"]
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
+
+[tool.uv.sources]
+hough-3d-line-detector = { path = "../../libraries/hough-3d-line-detector", editable = true }
