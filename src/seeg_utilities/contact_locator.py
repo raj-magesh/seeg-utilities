@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 import ipywidgets
 import k3d
-import nibabel as nib
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -16,11 +15,13 @@ from hough_3d_line_detector import (
     find_nearest_points_on_line,
 )
 from matplotlib import pyplot as plt
+from nibabel.affines import apply_affine
 
 from ._k3d_utilities import create_k3d_volume, set_k3d_camera
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+    from nibabel.spatialimages import SpatialImage
 
 FloatArray = npt.NDArray[np.floating]
 
@@ -29,8 +30,8 @@ class ContactLocator:
     def __init__(
         self,
         *,
-        ct: nib.spatialimages.SpatialImage,
-        brain_mask: nib.spatialimages.SpatialImage,
+        ct: SpatialImage,
+        brain_mask: SpatialImage,
         n_electrodes: int,
         contact_separation_in_mm: float,
         color_palette: sns.color_palette | None = None,
@@ -46,7 +47,7 @@ class ContactLocator:
 
         self.ct_data = self.ct.get_fdata().ravel()
         self.brain_mask = brain_mask.get_fdata().astype(np.bool_).ravel()
-        self.voxel_positions = nib.affines.apply_affine(
+        self.voxel_positions = apply_affine(
             ct.affine,
             np.indices(ct.shape, sparse=False).reshape(3, -1).T,
         )

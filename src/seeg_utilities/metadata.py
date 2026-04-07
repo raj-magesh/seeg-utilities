@@ -18,7 +18,7 @@ def load_electrode_metadata(
 ) -> pd.DataFrame:
     metadata = _collate_electrode_metadata(**{
         k.lower(): v
-        for k, v in runpy.run_path(filepath).items()
+        for k, v in runpy.run_path(str(filepath)).items()
         if k
         in {
             "CHANNEL_NAMES",
@@ -38,10 +38,10 @@ def load_electrode_metadata(
 def _collate_electrode_metadata(
     *,
     channel_names: list[str],
-    contact_locations: dict[tuple(str, int), str],
+    contact_locations: dict[tuple[str, int], str],
     ground_contact: tuple[str, int],
     reference_contact: tuple[str, int],
-    bad_contacts: dict[str, tuple[list[int], str]],
+    bad_contacts: dict[tuple[str, int], str],
 ) -> pd.DataFrame:
     metadata = {
         "electrode": [],

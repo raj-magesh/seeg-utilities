@@ -10,6 +10,7 @@ from nilearn.plotting import view_img
 from ._k3d_utilities import create_k3d_volume, set_k3d_camera
 
 if TYPE_CHECKING:
+    from nibabel.spatialimages import SpatialImage
     from nilearn.plotting.html_stat_map import StatMapView
 
 CT_THRESHOLDS_IN_HU = (500, 5_000)
@@ -17,9 +18,9 @@ CT_THRESHOLDS_IN_HU = (500, 5_000)
 
 def align_ct_to_t1w(
     *,
-    ct: nib.spatialimages.SpatialImage,
-    t1w: nib.spatialimages.SpatialImage,
-) -> nib.spatialimages.SpatialImage:
+    ct: SpatialImage,
+    t1w: SpatialImage,
+) -> SpatialImage:
     voxel_size = np.mean(ct.header.get_zooms())
     ct_aligned, _ = affine_registration(
         moving=ct,
@@ -33,8 +34,8 @@ def align_ct_to_t1w(
 
 def plot_2d_overlay(
     *,
-    ct: nib.spatialimages.SpatialImage,
-    t1w: nib.spatialimages.SpatialImage,
+    ct: SpatialImage,
+    t1w: SpatialImage,
     **kwargs,
 ) -> StatMapView:
     kwargs_default = {
@@ -61,8 +62,8 @@ def plot_2d_overlay(
 
 def plot_3d_overlay(
     *,
-    ct: nib.spatialimages.SpatialImage,
-    t1w: nib.spatialimages.SpatialImage,
+    ct: SpatialImage,
+    t1w: SpatialImage,
     t1w_kwargs: dict[str, Any] | None = None,
     ct_kwargs: dict[str, Any] | None = None,
     camera_kwargs: dict[str, Any] | None = None,

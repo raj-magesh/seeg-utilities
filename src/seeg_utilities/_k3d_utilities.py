@@ -1,12 +1,14 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import k3d
-import nibabel as nib
 import numpy as np
 from k3d.transform import get_bounds_fit_matrix, process_transform_arguments
 
+if TYPE_CHECKING:
+    from nibabel.spatialimages import SpatialImage
 
-def create_k3d_volume(img: nib.spatialimages.SpatialImage, /, **kwargs) -> k3d.Volume:
+
+def create_k3d_volume(img: SpatialImage, /, **kwargs) -> k3d.objects.Volume:
     # k3d plots an (x, y, z) array as (z, y, x), so I'm transposing it here
     # this doesn't seem to require a permutation of the affine matrix: not sure why
     # the outputs look perfect though

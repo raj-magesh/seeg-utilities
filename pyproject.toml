@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build"]
+requires = ["uv_build==0.11.3"]
 build-backend = "uv_build"
 
 [project]
@@ -31,16 +31,14 @@ classifiers = [
 ]
 urls = { repository = "https://codeberg.org/raj-magesh/seeg-utilities" }
 dependencies = [
-    "loguru",
     "numpy",
     "pandas",
     "scipy",
-    "mne",
     "nibabel",
+    "nilearn",
+    "seaborn",
     "dipy",
     "k3d",
-    # "dcm2niix",               # FIXME when cmake on cluster gets better
-    "heudiconv[all]",
     "matplotlib",
     "hough-3d-line-detector",
 ]
@@ -48,12 +46,9 @@ import-names = ["seeg_utilities"]
 version = "0.1.0"
 
 [dependency-groups]
-dev = ["ruff", "pytest", "sphinx"]
+dev = ["ruff", "pytest", "sphinx", "pandas-stubs", "scipy-stubs"]
 
 [tool.uv]
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
-
-[tool.uv.sources]
-hough-3d-line-detector = { path = "../../libraries/hough-3d-line-detector", editable = true }
