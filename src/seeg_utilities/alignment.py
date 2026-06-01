@@ -6,6 +6,7 @@ import numpy as np
 from dipy.align import affine_registration
 from k3d.colormaps import matplotlib_color_maps
 from nilearn.plotting import view_img
+from nilearn.plotting.html_stat_map import StatMapView
 
 from ._k3d_utilities import create_k3d_volume, set_k3d_camera
 

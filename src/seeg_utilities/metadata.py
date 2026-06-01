@@ -86,7 +86,9 @@ def _collate_electrode_metadata(
         .set_index(["electrode", "contact"])
         .sort_index(level=["electrode", "contact"])
         .assign(
-            ground=lambda x: x.index == ground_contact,
-            reference=lambda x: x.index == reference_contact,
+            # TODO(pd.index): replace with pd.index or better equivalent
+            # https://github.com/pandas-dev/pandas/issues/63277
+            ground=pd.col("ch_name").index == ground_contact,
+            reference=pd.col("ch_name").index == reference_contact,
         )
     )
