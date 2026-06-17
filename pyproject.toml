@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build==0.11.3"]
+requires = ["uv_build<0.12"]
 build-backend = "uv_build"
 
 [project]
@@ -46,7 +46,7 @@ import-names = ["seeg_utilities"]
 version = "0.1.0"
 
 [dependency-groups]
-dev = ["ruff", "pytest", "sphinx", "pandas-stubs", "scipy-stubs"]
+dev = ["ruff", "ty", "pytest", "sphinx", "pandas-stubs", "scipy-stubs"]
 
 [tool.uv]
 required-environments = [
