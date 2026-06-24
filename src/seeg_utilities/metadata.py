@@ -1,5 +1,7 @@
 """Instructions for digitizing sEEG electrode metadata."""
 
+from __future__ import annotations
+
 import runpy
 from typing import TYPE_CHECKING
 
@@ -62,7 +64,7 @@ def _collate_electrode_metadata(
         metadata["label"].append(f"{electrode}-{1 + contact_index:02}")
         metadata["bad"].append((electrode, contact_index) in bad_contacts)
         metadata["details"].append(
-            bad_contacts[electrode, contact_index] if metadata["bad"][-1] else ""
+            bad_contacts[electrode, contact_index] if metadata["bad"][-1] else "",
         )
         if (electrode, contact_index) in {
             ground_contact,
@@ -71,7 +73,7 @@ def _collate_electrode_metadata(
             metadata["ch_name"].append(
                 "ground"
                 if (electrode, contact_index) == ground_contact
-                else "reference"
+                else "reference",
             )
             metadata["jackbox_index"].append(-1)
         else:

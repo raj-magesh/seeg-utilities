@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 import k3d
@@ -12,7 +14,6 @@ from ._k3d_utilities import create_k3d_volume, set_k3d_camera
 
 if TYPE_CHECKING:
     from nibabel.spatialimages import SpatialImage
-    from nilearn.plotting.html_stat_map import StatMapView
 
 CT_THRESHOLDS_IN_HU = (500, 5_000)
 

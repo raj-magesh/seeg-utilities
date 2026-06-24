@@ -6,7 +6,7 @@ build-backend = "uv_build"
 name = "seeg-utilities"
 description = "Miscellaneous utilities to work with sEEG data"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 authors = [

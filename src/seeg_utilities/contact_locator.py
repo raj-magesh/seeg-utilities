@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import string
 from typing import TYPE_CHECKING
 
@@ -318,7 +320,7 @@ class ContactLocator:
             separation = np.diff(indices)
             ax.set_title(
                 f"{string.ascii_uppercase[i_electrode]} | {len(indices)} contacts\n"
-                f"{separation.mean():.2f} +/- {separation.std():.2f} mm"
+                f"{separation.mean():.2f} +/- {separation.std():.2f} mm",
             )
             ax.spines[["top", "right"]].set_visible(False)
 
@@ -358,7 +360,7 @@ class ContactLocator:
             kde_height_threshold,
         ])
         self._axes_qc_elements["peaks"][i_electrode].set_offsets(
-            np.stack([ts[peak_indices], kde[peak_indices]], axis=-1)
+            np.stack([ts[peak_indices], kde[peak_indices]], axis=-1),
         )
         self._axes_qc[0, i_electrode].set_xlim(left=ts.min() - 3, right=ts.max() + 3)
         self._axes_qc[0, i_electrode].set_ylim(bottom=-0.05, top=1.05)
@@ -369,7 +371,7 @@ class ContactLocator:
         self._axes_qc_elements["separation"][i_electrode].set_data(x, separation)
         self._axes_qc[0, i_electrode].set_title(
             f"{string.ascii_uppercase[i_electrode]} | {len(peak_indices)} contacts\n"
-            f"{separation.mean():.2f} +/- {separation.std():.2f} mm"
+            f"{separation.mean():.2f} +/- {separation.std():.2f} mm",
         )
 
     def _initialize_ct_figure(self, thresholds: tuple[float, float]) -> None:

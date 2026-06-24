@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Literal
 
 import k3d
@@ -20,7 +22,7 @@ def create_k3d_volume(img: SpatialImage, /, **kwargs) -> k3d.objects.Volume:
     # k3d sets the default bounding box to (-0.5, 0.5)^3
     # this is fixed by applying the bounding box affine after the regular affine
     bounding_box_affine = get_bounds_fit_matrix(
-        *np.stack([np.zeros(3), np.array(img.shape) - 1], axis=-1).ravel()
+        *np.stack([np.zeros(3), np.array(img.shape) - 1], axis=-1).ravel(),
     )
     return process_transform_arguments(
         volume,
