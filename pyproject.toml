@@ -1,9 +1,10 @@
 [build-system]
-requires = ["uv_build<0.12"]
+requires = ["uv_build<0.13"]
 build-backend = "uv_build"
 
 [project]
 name = "seeg-utilities"
+version = "0.1.0"
 description = "Miscellaneous utilities to work with sEEG data"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -29,21 +30,24 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
-urls = { repository = "https://codeberg.org/raj-magesh/seeg-utilities" }
+urls = { source = "https://codeberg.org/raj-magesh/seeg-utilities" }
 dependencies = [
     "numpy",
     "pandas",
     "scipy",
     "nibabel",
     "nilearn",
+    "mne",
+    "mne-bids[full]",
     "seaborn",
     "dipy",
     "k3d",
     "matplotlib",
+    "pyvista[jupyter]",
+    # "trame-pyvista[jupyter]",
     "hough-3d-line-detector",
 ]
 import-names = ["seeg_utilities"]
-version = "0.1.0"
 
 [dependency-groups]
 dev = ["ruff", "ty", "pytest", "sphinx", "pandas-stubs", "scipy-stubs"]
