@@ -16,7 +16,6 @@ authors = [
 keywords = [
     "sEEG",
     "contact locator",
-    "RippleNeuroMed control",
     "CT to MRI (T1w) alignment",
     "DICOM to NIfTI conversion",
     "electrode metadata",
@@ -38,21 +37,35 @@ dependencies = [
     "nibabel",
     "nilearn",
     "mne",
-    "mne-bids[full]",
     "seaborn",
+    "ipywidgets",
     "dipy",
     "k3d",
     "matplotlib",
     "pyvista[jupyter]",
-    # "trame-pyvista[jupyter]",
     "hough-3d-line-detector",
+    # "trame-pyvista[jupyter]",
 ]
 import-names = ["seeg_utilities"]
 
 [dependency-groups]
-dev = ["ruff", "ty", "pytest", "sphinx", "pandas-stubs", "scipy-stubs"]
+dev = [
+    "ruff",
+    "ty",
+    "deptry",
+    "pytest",
+    "sphinx",
+    "pandas-stubs",
+    "scipy-stubs",
+]
 
 [tool.uv]
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
+
+[tool.uv.sources]
+hough-3d-line-detector = { path = "../hough-3d-line-detector", editable = true }
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["pyvista"]

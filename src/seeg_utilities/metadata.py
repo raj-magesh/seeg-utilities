@@ -1,7 +1,5 @@
 """Instructions for digitizing sEEG electrode metadata."""
 
-from __future__ import annotations
-
 import itertools
 import runpy
 from typing import TYPE_CHECKING
@@ -15,6 +13,55 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+def create_dig_montage(
+    *,
+    subject: str,
+    eeg_channels: list[str],
+    eeg_montage: str = "standard_1020",
+    dataset_home: Path,
+) -> mne.channels.DigMontage:
+    # read channel locations in ACPC space
+    channel_positions = pd.read_csv(
+        dataset_home
+        / "sourcedata"
+        / f"sub-{subject}"
+        / "ieeg"
+        / f"sub-{subject}_space-ACPC_electrodes.tsv",
+        delimiter="\t",
+    )
+
+    # compute fiducials in subject's MRI space
+    fiducials = dict(
+        zip(
+            ("LPA", "nasion", "RPA"),
+            mne.coreg.get_mni_fiducials(
+                subject=f"sub-{subject}",
+                subjects_dir=dataset_home / "derivatives" / "freesurfer",
+            ),
+            strict=True,
+        ),
+    )
+    head_size = 0.6 * np.linalg.norm(fiducials["LPA"]["r"] - fiducials["RPA"]["r"])
+
+    eeg_positions = mne.channels.make_standard_montage(
+        eeg_montage,
+        head_size=head_size,
+    ).get_positions()["ch_pos"]
+
+    return mne.channels.make_dig_montage(
+        ch_pos=dict(
+            zip(
+                channel_positions["name"],
+                channel_positions[["x", "y", "z"]].to_numpy() / 1e3,
+                strict=True,
+            ),
+        )
+        | {eeg_channel: eeg_positions[eeg_channel] for eeg_channel in eeg_channels},
+        coord_frame="mri",
+        **{label.lower(): fiducial["r"] for label, fiducial in fiducials.items()},
+    )
+
+
 def load_electrode_metadata(
     metadata: Path,
     jackbox: Path,
@@ -22,7 +69,11 @@ def load_electrode_metadata(
     exclude_ground: bool = True,
     exclude_reference: bool = False,
 ) -> pd.DataFrame:
-    electrode_metadata = pd.read_csv(jackbox, sep=",", names=["electrode", "contact", "channel_type"])
+    electrode_metadata = pd.read_csv(
+        jackbox,
+        sep=",",
+        names=["electrode", "contact", "channel_type"],
+    )
     extra = runpy.run_path(str(metadata))
 
     electrode_metadata = pd.concat(
@@ -31,10 +82,10 @@ def load_electrode_metadata(
             pd.DataFrame(
                 [
                     extra["GROUND_CONTACT"],
-                    extra["REFERENCE_CONTACT"]
+                    extra["REFERENCE_CONTACT"],
                 ],
                 columns=electrode_metadata.columns,
-            )
+            ),
         ],
         axis=0,
         ignore_index=True,
@@ -45,7 +96,9 @@ def load_electrode_metadata(
         .astype({"contact": np.uint8})
         .assign(
             ch_name=extra["CHANNEL_NAMES"] + ["ground", "reference"],
-            label=lambda x: x["electrode"] + "-" + (1 + x["contact"]).astype(str).str.zfill(2),
+            label=lambda x: (
+                x["electrode"] + "-" + (1 + x["contact"]).astype(str).str.zfill(2)
+            ),
             ground=pd.col("ch_name") == "ground",
             reference=pd.col("ch_name") == "reference",
         )
@@ -55,7 +108,9 @@ def load_electrode_metadata(
 
     # add bad contacts
     electrode_metadata.loc[extra["BAD_CONTACTS"].keys(), "bad"] = True
-    electrode_metadata.loc[extra["BAD_CONTACTS"].keys(), "details"] = list(extra["BAD_CONTACTS"].values())
+    electrode_metadata.loc[extra["BAD_CONTACTS"].keys(), "details"] = list(
+        extra["BAD_CONTACTS"].values(),
+    )
 
     if exclude_ground:
         electrode_metadata = electrode_metadata.loc[~electrode_metadata["ground"]]
@@ -82,11 +137,9 @@ def compute_adjacency(ch_names: list[str]) -> scipy.sparse.csr_array:
     return scipy.sparse.csr_array(adjacency)
 
 
-def apply_bipolar_referencing[Data: mne.io.BaseRaw | mne.Epochs | mne.Evoked](
-    data: Data,
-) -> Data:
+def apply_bipolar_referencing(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
     kwargs = {key: [] for key in ("anode", "cathode", "ch_name")}
-    for electrode_1, electrode_2 in itertools.pairwise(sorted(data.ch_names)):
+    for electrode_1, electrode_2 in itertools.pairwise(sorted(raw.ch_names)):
         shaft_1, contact_1 = electrode_1.split("-")
         shaft_2, _ = electrode_2.split("-")
         if shaft_1 == shaft_2:
@@ -95,4 +148,4 @@ def apply_bipolar_referencing[Data: mne.io.BaseRaw | mne.Epochs | mne.Evoked](
             kwargs["anode"].append(electrode_1)
             kwargs["cathode"].append(electrode_2)
             kwargs["ch_name"].append(f"d{shaft_1}-{contact_1}")
-    return mne.set_bipolar_reference(data.load_data(), **kwargs)
+    return mne.set_bipolar_reference(raw.load_data(), **kwargs)
