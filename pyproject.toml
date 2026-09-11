@@ -31,12 +31,14 @@ classifiers = [
 ]
 urls = { source = "https://codeberg.org/raj-magesh/seeg-utilities" }
 dependencies = [
+    "loguru",
     "numpy",
     "pandas",
     "scipy",
     "nibabel",
     "nilearn",
     "mne",
+    "edfio",
     "seaborn",
     "ipywidgets",
     "dipy",

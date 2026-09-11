@@ -17,7 +17,7 @@ from hough_3d_line_detector import (
 from matplotlib import pyplot as plt
 from nibabel.affines import apply_affine
 
-from ._k3d_utilities import create_k3d_volume, set_k3d_camera
+from seeg_utilities._k3d_utilities import create_k3d_volume, set_k3d_camera
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
