@@ -53,13 +53,15 @@ def filter_raw_data(
     l_freq: float | None = None,
     h_freq: float | None = None,
     notch_freq: float | None = None,
+    **kwargs,
 ) -> mne.io.BaseRaw:
     if notch_freq is not None:
         raw = raw.load_data().notch_filter(
             freqs=notch_freq * np.arange(1, (raw.info["sfreq"] / 2) // notch_freq),
+            **kwargs,
         )
     if (l_freq is not None) or (h_freq is not None):
-        raw = raw.load_data().filter(l_freq=l_freq, h_freq=h_freq)
+        raw = raw.load_data().filter(l_freq=l_freq, h_freq=h_freq, **kwargs)
     return raw
 
 
