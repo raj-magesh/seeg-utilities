@@ -11,7 +11,7 @@ POWER_LINE_FREQUENCY_IN_HZ = 60
 
 
 def find_binary_state_transitions(
-    signal: npt.NDArray[np.floating],
+    x: npt.NDArray[np.floating],
     *,
     low: float,
     high: float,
@@ -23,8 +23,6 @@ def find_binary_state_transitions(
     low:  switch OFF when signal falls below this value
     high: switch ON when signal rises above this value
     """
-    x = np.asarray(signal)
-
     if median_size > 1:
         x = median_filter(x, size=median_size)
 
