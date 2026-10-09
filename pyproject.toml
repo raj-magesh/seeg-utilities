@@ -38,15 +38,13 @@ dependencies = [
     "nibabel",
     "nilearn",
     "mne",
-    "edfio",
     "seaborn",
     "ipywidgets",
     "dipy",
     "k3d",
     "matplotlib",
-    "pyvista[jupyter]",
+    "pyvista[cvista,jupyter]",
     "hough-3d-line-detector",
-    # "trame-pyvista[jupyter]",
 ]
 import-names = ["seeg_utilities"]
 
@@ -69,5 +67,20 @@ required-environments = [
 [tool.uv.sources]
 hough-3d-line-detector = { path = "../hough-3d-line-detector", editable = true }
 
-[tool.deptry.per_rule_ignores]
-DEP002 = ["pyvista"]
+[tool.ruff]
+preview = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "missing-copyright-notice",
+    "line-too-long",
+    "missing-todo-link",
+    "missing-todo-author",
+]
+pydocstyle.convention = "numpy"
+logger-objects = ["loguru.logger"]
+typing-modules = ["numpy.typing"]
+
+[tool.deptry]
+known_first_party = ["seeg_utilities"]
