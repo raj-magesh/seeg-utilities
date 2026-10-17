@@ -1,20 +1,11 @@
 from typing import TYPE_CHECKING, Self
 
-import numpy as np
-import numpy.typing as npt
-import pandas as pd
-import seaborn as sns
-from mne.decoding import SlidingEstimator, cross_val_multiscore
-from sklearn import metrics
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, TransformerMixin
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import RobustScaler
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-    from sklearn.preprocessing import StandardScaler
+    import numpy as np
+    import numpy.typing as npt
+    from sklearn.preprocessing import RobustScaler, StandardScaler
 
 
 class ChannelScaler(BaseEstimator, TransformerMixin, MetaEstimatorMixin):
@@ -158,122 +149,3 @@ class Vectorizer(BaseEstimator, TransformerMixin):
             is of length n_samples. The last dimension is of length n_times.
         """
         return X.reshape(*X.shape[:2], *self.features_shape_)
-
-
-def create_sliding_estimator(
-    *,
-    scorer: str,
-    n_categories: int,
-    scorer_kwargs: dict | None = None,
-    **kwargs,
-) -> Pipeline:
-    match scorer:
-        case "roc_auc":
-            scorer = metrics.make_scorer(
-                metrics.roc_auc_score,
-                response_method="predict_proba",
-                labels=list(range(n_categories)),
-                average="weighted",
-                **(scorer_kwargs or {}),
-            )
-        case "confusion_matrix":
-            scorer = metrics.make_scorer(
-                metrics.confusion_matrix,
-                labels=list(range(n_categories)),
-                **(scorer_kwargs or {}),
-            )
-        case "balanced_accuracy_score":
-            scorer = metrics.make_scorer(
-                metrics.balanced_accuracy_score,
-                **(scorer_kwargs or {}),
-            )
-
-    return make_pipeline(
-        ChannelScaler(RobustScaler(unit_variance=True)),
-        Vectorizer(),
-        SlidingEstimator(
-            base_estimator=LogisticRegressionCV(
-                solver="lbfgs",
-                random_state=0,
-                max_iter=1_000,
-                l1_ratios=(0,),
-                Cs=np.geomspace(1e-10, 1, 10),
-                scoring="neg_log_loss",
-                use_legacy_attributes=False,
-            ),
-            scoring=scorer,
-        ),
-    )
-
-
-def compute_temporal_classification_accuracy(
-    x: npt.NDArray[np.floating],
-    y: npt.NDArray[np.integer],
-    *,
-    estimator: BaseEstimator,
-    n_folds: int = 5,
-    groups: npt.NDArray[np.integer] | None = None,
-    n_jobs: int = -1,
-    verbose: bool = False,
-) -> npt.NDArray:
-    # don't allow within-run train/test overlap
-    if groups is not None:
-        cv = StratifiedGroupKFold(n_splits=n_folds, shuffle=True, random_state=0)
-    else:
-        cv = n_folds
-
-    return cross_val_multiscore(
-        estimator=estimator,
-        X=x,
-        y=y,
-        cv=cv,
-        groups=groups,
-        n_jobs=n_jobs,
-        verbose=verbose,
-    )
-
-
-def plot_generalization_matrix(
-    ax: Axes,
-    scores: npt.NDArray[np.floating],
-    *,
-    t: npt.NDArray[np.floating],
-    t_spacing: float,
-    t_start: float,
-    t_end: float,
-):
-    ticks = np.linspace(
-        t_start,
-        t_end,
-        1 + np.ceil((t_end - t_start) / t_spacing).astype(int),
-    )
-    tick_indices = np.searchsorted(t, ticks)
-
-    sns.heatmap(
-        ax=ax,
-        data=pd.DataFrame(
-            scores,
-            columns=t,
-            index=t,
-        ),
-        xticklabels=False,
-        yticklabels=False,
-        square=True,
-        center=0.5,
-        cbar_kws={"label": "ROC-AUC"},
-        cmap="RdBu_r",
-    )
-    _ = ax.set(
-        xlabel="time",
-        ylabel="time",
-        xticks=tick_indices,
-        xticklabels=[f"{tick:.1f}" for tick in ticks],
-        yticks=tick_indices,
-        yticklabels=[f"{tick:.1f}" for tick in ticks],
-    )
-
-    t_0 = np.searchsorted(t, 0).astype(float)
-    ax.invert_yaxis()
-    ax.axvline(t_0, ls="-", lw=0.5, c="gray")
-    ax.axhline(t_0, ls="-", lw=0.5, c="gray")
-    ax.axline((t_start, t_start), (t_end, t_end), ls="--", lw=0.5, c="gray")
